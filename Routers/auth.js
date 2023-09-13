@@ -20,7 +20,7 @@ router.get('/', (req, res) => {
 })
 
 //using async
-router.post('/registeration', async (req, res) => {
+router.post('/register', async (req, res) => {
     try {
         const { name, email, phone, work, password, cpassword } = req.body
         if (!name || !email || !phone || !work || !password || !cpassword) {
@@ -85,9 +85,9 @@ router.post('/registeration', async (req, res) => {
 
 
 router.post("/signin", async (req, res) => {
-console.log("login route")
+    console.log("login route")
     try {
-        
+
         const { email, password } = req.body
         if (!email || !password) {
             return res.status(422).json({ error: "user donot fill all the fields " })
@@ -102,11 +102,11 @@ console.log("login route")
         if (userLogin) {
             const isMatch = await bcrypt.compare(password, userLogin.password)
             const token = await userLogin.generateAuthToken()
-          
-            
+
+
             if (isMatch) {
                 console.log('user login finally')
-                res.send({"jwtoken": token,message: "user login successfully"},
+                res.send({ "jwtoken": token, message: "user login successfully" },
                 )
                 // res.status(202).json()
             }
@@ -137,24 +137,34 @@ router.get('/getUserData', authenticate, (req, res) => {
     res.send(req.rootUser)
 })
 
-router.post('/contactUs',authenticate,async(req, res) => {
-    console.log("hello from contactUs")
-    
-    const{_id,message}=req.body
-    console.log("ok"+_id,message)
-const messageUser=await User.findOne({_id:_id})
-// console.log(messageUser)
-if(messageUser){
-    const finalUser=await messageUser.addMessage(message)
-    res.send("202")
-}
+// POST /contactUs - Send a message
+router.post('/contactUs', authenticate, async (req, res) => {
+    console.log("hello from contactUs");
+
+    const { _id, message } = req.body;
+
+    try {
+        // Find the user based on the provided _id
+        const messageUser = await User.findOne({ _id });
+
+        if (!messageUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Add the message to the user's messages array
+        await messageUser.addMessage(message);
+
+        // Optionally, you can send a response back to the client
+        return res.status(202).json({ message: "Message sent successfully", messageUser });
+    } catch (error) {
+        console.error("Error sending message:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
 
 
- })
-
-
- //logout
- router.post('/logout', (req, res) => {
+//logout
+router.post('/logout', (req, res) => {
     console.log("hello from logout")
     res.send("455")
 })
